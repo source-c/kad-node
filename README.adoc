@@ -1,0 +1,90 @@
+= Kad Node
+
+Simple implementation of the Kademlia DHT node in python using AsyncIO.
+To keep data in distributed manner from python, painless and as simple as it ever possible.
+
+== Sample
+
+[source, python, name=app.py]
+----
+import sys
+import asyncio
+
+if len(sys.argv) == 3:
+    bsh, bsp = (sys.argv[1], int(sys.argv[2]))
+    keeper_mode = None
+elif len(sys.argv) == 2:
+    keeper_mode = sys.argv[1]
+    bsh, bsp = None, None
+elif len(sys.argv) == 1:
+    import random
+
+    from node import (
+        GRID_NODE_ID_BIT_LENGTH
+    )
+
+    keeper_mode = str(random.getrandbits(GRID_NODE_ID_BIT_LENGTH))
+    bsh, bsp = None, None
+else:
+    print("Usage: python app.py <bootstrap ip> <bootstrap port>")
+    print("       python app.py <node id>")
+    print("       python app.py")
+    sys.exit(1)
+
+try:
+    from node import Node
+    import settings as st
+
+    settings = st.get_settings()
+    log = st.get_logger('kad-node')
+
+    log.debug("Host: '%s' Port: '%s'" % (bsh, bsp))
+
+    node = Node(port=bsp, bshost=bsh, bsport=bsp, loop=asyncio.new_event_loop())
+
+    if keeper_mode:
+        node.info()
+
+        asyncio.set_event_loop(node.loop)
+    else:
+        import uuid
+        import time
+
+        lstart = time.process_time()
+
+        log.info("A %s", node.get('testU'))
+        log.info("A %s", node.get('test2'))
+        log.info("A %s", node.set('testU', uuid.uuid4()))
+        log.info("A %s", node.set('test', uuid.uuid4()))
+        log.info("A %s", node.set('test2', 10))
+        log.info("A %s", node.get('test'))
+        log.info("A %s", node.get('test2'))
+
+        log.info("t(A) %s sec", time.process_time() - lstart)
+        lstart = time.process_time()
+
+        log.info("B %s", node.rem('test'))
+        log.info("B1 %s", node.set('test', 2))
+        log.info("B2 %s", node.set('test', 3))
+        log.info("B2 %s", node.get('test'))
+        log.info("B2 %s", node.rem('test'))
+        log.info("B2 %s", node.get('test'))
+        log.info("B %s", node.rem('test2'))
+        log.info("B3 %s", node.get('test'))
+        log.info("B3 %s", node.get('test'))
+        log.info("B1 %s", node.get('test2'))
+
+        log.info("t(B*) %s sec", time.process_time() - lstart)
+
+
+except KeyboardInterrupt:
+    pass
+finally:
+    del node
+----
+
+== License
+
+Copyright © 2018-2022
+
+Distributed under the MIT License.
