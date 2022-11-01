@@ -1,0 +1,4 @@
+# Kad Node
+
+kademlia>= 2.2
+
